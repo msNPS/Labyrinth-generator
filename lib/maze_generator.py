@@ -1,15 +1,19 @@
 import random
 import sys
-
+import time
 
 sys.setrecursionlimit(10**9)
-random.seed(random.random())
 
 
 class Maze:
-    def __init__(self, height, width):
+    def __init__(self, height, width, seed=None):
         self.height = height
         self.width = width
+        if seed:
+            self.seed = seed
+        else:
+            self.seed = time.time()
+        random.seed(self.seed)
         self.generate()
 
     def dfs_generate(self, x, y):
@@ -27,9 +31,6 @@ class Maze:
         self.maze = [[[] for x in range(self.width)] for y in range(self.height)]
         self.used = [[False for x in range(self.width)] for y in range(self.height)]
         self.dfs_generate(0, 0)
-        for y in range(1, self.width + 1):
-            for x in range(1, self.height + 1):
-                continue
 
     def shortest_path_dfs(self, cur, finish, prev, path):
         if cur == finish:
