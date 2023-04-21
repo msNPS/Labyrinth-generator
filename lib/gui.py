@@ -1,17 +1,18 @@
 import customtkinter as ctk
+import tkinter as tk
 from tkinter import filedialog
 import os
 from PIL import Image
-from tkinter.messagebox import showinfo
-from .vizualizer import draw_maze
 from .archiver import export_maze, import_maze
 from .maze_generator import Maze
+
+
+BUTTON_COLOR = ("#68b885", "#31604e")
 
 
 class App(ctk.CTk):
     def __init__(self):
         super().__init__()
-
         # Change accent color in customtkinter.py
 
         self.width = 10
@@ -21,8 +22,8 @@ class App(ctk.CTk):
         self.iconbitmap("static/icon.ico")
         self.geometry("1000x600")
 
-        # set grid layout 1x2
-        self.grid_rowconfigure(1, weight=1)
+        # Set grid layout 1x2
+        self.grid_rowconfigure(2, weight=1)
         self.grid_columnconfigure(1, weight=1)
 
         # Generate Frame
@@ -43,7 +44,7 @@ class App(ctk.CTk):
             hover_color=("gray70", "gray30"),
             anchor="center",
             command=self.generate_new_maze,
-            fg_color="#31604e",
+            fg_color=BUTTON_COLOR,
         )
         self.generate_button.grid(
             row=0,
@@ -69,7 +70,7 @@ class App(ctk.CTk):
         )
         self.height_entry.grid(row=2, column=0, sticky="e", padx=10, pady=10)
 
-        # File Frame
+        # Import/Export File Frame
         self.file_frame = ctk.CTkFrame(
             self,
             corner_radius=10,
@@ -91,7 +92,7 @@ class App(ctk.CTk):
             hover_color=("gray70", "gray30"),
             anchor="center",
             command=self.import_button_event,
-            fg_color="#31604e",
+            fg_color=BUTTON_COLOR,
         )
         self.import_button.grid(
             row=1,
@@ -111,7 +112,7 @@ class App(ctk.CTk):
             hover_color=("gray70", "gray30"),
             anchor="center",
             command=self.export_button_event,
-            fg_color="#31604e",
+            fg_color=BUTTON_COLOR,
         )
         self.export_button.grid(
             row=2,
@@ -121,33 +122,54 @@ class App(ctk.CTk):
             pady=10,
         )
 
+        # Apperance Frame
+        self.appearance_frame = ctk.CTkFrame(
+            self,
+            corner_radius=10,
+        )
+        self.appearance_frame.grid(row=2, column=0, padx=20, pady=20, sticky="swe")
+        self.appearance_frame.grid_columnconfigure(0, weight=1)
+        self.appearance_frame.grid_rowconfigure(0, weight=1)
+        self.appearance_mode_optionemenu = ctk.CTkOptionMenu(
+            self.appearance_frame,
+            values=["Light", "Dark", "System"],
+            command=self.change_appearance_mode_event,
+            fg_color=BUTTON_COLOR,
+        )
+        self.appearance_mode_optionemenu.set("System")
+        self.appearance_mode_optionemenu.grid(row=0, column=0, padx=20, pady=(10, 10))
+
         # Maze Frame
         self.maze_frame = ctk.CTkFrame(self, corner_radius=10, width=500, height=500)
-        self.maze_frame.grid(row=0, column=1, rowspan=2, sticky="nsew", padx=20, pady=20)
+        self.maze_frame.grid(row=0, column=1, rowspan=3, sticky="nsew", padx=20, pady=20)
         self.maze_frame.grid_rowconfigure(0, weight=1)
         self.maze_frame.grid_columnconfigure(0, weight=1)
 
         self.maze_label = ctk.CTkLabel(self.maze_frame, fg_color="transparent", text="", width=500, height=500, anchor="center")
-        self.maze_label.grid(row=0, column=0, sticky="nsew", padx=20, pady=20)
+        self.maze_label.grid(row=0, column=0, columnspan=3, sticky="nsew")
 
         self.generate_new_maze()
 
     def draw_maze(self, width, height, seed=None):
         self.maze = Maze(width, height, seed)
         if width > height:
-            size_x, size_y = 500, 500 / width * height
+            size_x, size_y = 500, 500 // width * height
         else:
-            size_x, size_y = 500 / height * width, 500
-        maze_image = ctk.CTkImage(Image.fromarray(draw_maze(self.maze)), size=(size_x, size_y))
-        self.maze_label.configure(image=maze_image, text="")
+            size_x, size_y = 500 // height * width, 500
+        self.maze_image = ctk.CTkImage(Image.fromarray(self.maze.draw_path((2, 2), (9, 7))), size=(size_y, size_x))
+        self.maze_label.configure(image=self.maze_image, text="")
 
     def generate_new_maze(self):
-        if self.width_entry.get() != "":
-            self.width = int(self.width_entry.get())
-        if self.height_entry.get() != "":
-            self.height = int(self.height_entry.get())
+        try:
+            if self.width_entry.get() != "":
+                self.width = int(self.width_entry.get())
+            if self.height_entry.get() != "":
+                self.height = int(self.height_entry.get())
+        except:
+            self.maze_label.configure(text="Width and height must be integers less than 100", image="")
+            return
         if self.width >= 100 or self.height >= 100:
-            self.maze_label.configure(text="Width and height must be less than 100", image="")
+            self.maze_label.configure(text="Width and height must be integers less than 100", image="")
             return
         self.import_label.configure(text="No imported maze")
         self.draw_maze(self.width, self.height)
@@ -160,6 +182,8 @@ class App(ctk.CTk):
             return
         self.import_label.configure(text=f"Imported maze: {filename.split('/')[-1]}")
         width, height, seed = import_maze(filename)
+        self.width_entry.insert(0, str(width))
+        self.height_entry.insert(0, str(height))
         self.draw_maze(width, height, seed)
 
     def export_button_event(self):
@@ -169,6 +193,10 @@ class App(ctk.CTk):
         if filename == "":
             return
         export_maze(self.maze, filename)
+
+    def change_appearance_mode_event(self, new_appearance_mode: str):
+        ctk.set_appearance_mode(new_appearance_mode)
+        self.draw_maze(self.width, self.height)
 
 
 if __name__ == "__main__":
