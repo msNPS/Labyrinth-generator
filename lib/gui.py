@@ -296,7 +296,13 @@ class App(ctk.CTk):
         except:
             pass
 
-        path_img, path_len = self.maze.draw_path(tuple(start), tuple(end), self.appearance_mode_optionemenu.get())
+        try:
+            path_img, path_len = self.maze.draw_path(tuple(start), tuple(end), self.appearance_mode_optionemenu.get())
+        except:
+            tk.messagebox.showerror(
+                title="Incorrect path coordinates", message="Path coordinates must be integers less than width and height"
+            )
+            return
         self.maze_image = ctk.CTkImage(Image.fromarray(path_img), size=(size_x, size_y))
         self.maze_label.configure(image=self.maze_image, text="", corner_radius=10)
         self.path_label.configure(text=f"Path length: {path_len}")
@@ -308,10 +314,14 @@ class App(ctk.CTk):
             if self.height_entry.get() != "":
                 self.height = int(self.height_entry.get())
         except:
-            tk.messagebox.showerror(title="Incorrect dimennsions", message="Width and height must be integers not more than 100")
+            tk.messagebox.showerror(
+                title="Incorrect dimennsions", message="Width and height must be integers not more than 128 (and 32 for Kraskal)"
+            )
             return
-        if self.width > 100 or self.height > 100:
-            tk.messagebox.showerror(title="Incorrect dimennsions", message="Width and height must be integers not more than 100")
+        if self.width > 128 or self.height > 128 or (self.algorithm == "Kraskal" and (self.width > 32 or self.height > 32)):
+            tk.messagebox.showerror(
+                title="Incorrect dimennsions", message="Width and height must be integers not more than 128 (and 32 for Kraskal)"
+            )
             return
 
         self.import_label.configure(text="No imported maze")
