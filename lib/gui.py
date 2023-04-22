@@ -17,13 +17,15 @@ class App(ctk.CTk):
 
         self.width = 10
         self.height = 10
+        self.algorithm = "DFS"
+        self.seed = None
 
         self.title("Maze generator")
         self.iconbitmap("static/icon.ico")
-        self.geometry("1000x600")
+        self.geometry("1000x800")
 
         # Set grid layout 1x2
-        self.grid_rowconfigure(2, weight=1)
+        self.grid_rowconfigure(3, weight=1)
         self.grid_columnconfigure(1, weight=1)
 
         # Generate Frame
@@ -31,13 +33,14 @@ class App(ctk.CTk):
             self,
             corner_radius=10,
         )
-        self.generate_frame.grid(row=0, column=0, padx=20, pady=20, sticky="nwe")
-        self.generate_frame.grid_rowconfigure(7, weight=1)
+        self.generate_frame.grid(row=0, column=0, padx=16, pady=16, sticky="nwe")
+        self.generate_frame.grid_rowconfigure(4, weight=1)
+        self.generate_frame.grid_columnconfigure(0, weight=1)
 
         self.generate_button = ctk.CTkButton(
             self.generate_frame,
             corner_radius=8,
-            height=40,
+            height=50,
             border_spacing=10,
             text="🎲 Generate Maze",
             text_color=("gray10", "gray90"),
@@ -54,28 +57,122 @@ class App(ctk.CTk):
             pady=16,
         )
 
+        self.algorithm_label = ctk.CTkLabel(
+            self.generate_frame, text=f"Generation alorithm:", width=200, corner_radius=0, anchor="center"
+        )
+        self.algorithm_label.grid(row=1, column=0, padx=16, sticky="nsew")
+        self.algorithm_options = ctk.CTkOptionMenu(
+            self.generate_frame,
+            values=["DFS", "BFS", "Kraskal's"],
+            variable=ctk.StringVar(self, value="DFS"),
+            width=150,
+            height=30,
+            corner_radius=10.0,
+            command=self.algorithm_selection_event,
+            fg_color=BUTTON_COLOR,
+            text_color=("gray10", "gray90"),
+            button_hover_color=("gray80", "gray20"),
+            button_color=("gray70", "gray30"),
+        )
+        self.algorithm_options.grid(row=2, column=0, padx=16, pady=10, sticky="nsew")
+
         self.width_label = ctk.CTkLabel(self.generate_frame, text=f"Width: ", width=200, corner_radius=0, anchor="w")
-        self.width_label.grid(row=1, column=0, padx=20, sticky="w")
+        self.width_label.grid(row=3, column=0, padx=16)
 
         self.width_entry = ctk.CTkEntry(
             master=self.generate_frame, placeholder_text=f"{self.width}", width=120, height=25, border_width=2, corner_radius=10
         )
-        self.width_entry.grid(row=1, column=0, sticky="e", padx=10, pady=10)
+        self.width_entry.grid(row=3, column=0, padx=16, pady=10, sticky="e")
 
         self.height_label = ctk.CTkLabel(self.generate_frame, text=f"Height: ", width=200, corner_radius=0, anchor="w")
-        self.height_label.grid(row=2, column=0, padx=20, sticky="w")
+        self.height_label.grid(row=4, column=0, padx=16)
 
         self.height_entry = ctk.CTkEntry(
             master=self.generate_frame, placeholder_text=f"{self.width}", width=120, height=25, border_width=2, corner_radius=10
         )
-        self.height_entry.grid(row=2, column=0, sticky="e", padx=10, pady=10)
+        self.height_entry.grid(row=4, column=0, padx=16, pady=10, sticky="e")
+
+        # Path Finding Frame
+        self.path_frame = ctk.CTkFrame(
+            self,
+            corner_radius=10,
+        )
+        self.path_frame.grid(row=2, column=0, padx=16, pady=10, sticky="nwe")
+        self.path_frame.grid_columnconfigure(5, weight=1)
+        self.path_frame.grid_rowconfigure(3, weight=1)
+
+        self.path_label = ctk.CTkLabel(self.path_frame, text=f"Maze Path", width=200, corner_radius=0, anchor="center")
+        self.path_label.grid(row=0, column=0, columnspan=6, padx=16, pady=16)
+
+        self.path_show_button = ctk.CTkButton(
+            self.path_frame,
+            corner_radius=8,
+            height=30,
+            width=100,
+            border_spacing=10,
+            text="🔎Show",
+            text_color=("gray10", "gray90"),
+            hover_color=("gray70", "gray30"),
+            anchor="center",
+            command=self.show_path,
+            fg_color=BUTTON_COLOR,
+        )
+        self.path_show_button.grid(row=1, column=0, sticky="nesw", padx=16, columnspan=3)
+        self.path_show_button = ctk.CTkButton(
+            self.path_frame,
+            corner_radius=8,
+            height=30,
+            width=100,
+            border_spacing=10,
+            text="🗑️Clear",
+            text_color=("gray10", "gray90"),
+            hover_color=("gray70", "gray30"),
+            anchor="center",
+            command=self.draw_maze,
+            fg_color=BUTTON_COLOR,
+        )
+        self.path_show_button.grid(row=1, column=3, sticky="nesw", padx=16, columnspan=3)
+
+        self.path_start_label = ctk.CTkLabel(self.path_frame, text=f"Start: ", width=20, corner_radius=0, anchor="w")
+        self.path_start_label.grid(row=2, column=0, padx=16, pady=10, sticky="w")
+        self.path_start_x_label = ctk.CTkLabel(self.path_frame, text=f"(", width=5, corner_radius=0, anchor="w")
+        self.path_start_x_label.grid(row=2, column=1, padx=2, pady=10, sticky="w")
+        self.path_start_x_entry = ctk.CTkEntry(
+            master=self.path_frame, placeholder_text=f"0", width=40, height=25, border_width=2, corner_radius=10
+        )
+        self.path_start_x_entry.grid(row=2, column=2, padx=2, pady=10, sticky="w")
+        self.path_start_y_label = ctk.CTkLabel(self.path_frame, text=f";", width=5, corner_radius=0, anchor="w")
+        self.path_start_y_label.grid(row=2, column=3, padx=2, pady=10, sticky="w")
+        self.path_start_y_entry = ctk.CTkEntry(
+            master=self.path_frame, placeholder_text=f"0", width=40, height=25, border_width=2, corner_radius=10
+        )
+        self.path_start_y_entry.grid(row=2, column=4, padx=2, pady=10, sticky="w")
+        self.path_start_y_label = ctk.CTkLabel(self.path_frame, text=f")", width=5, corner_radius=0, anchor="w")
+        self.path_start_y_label.grid(row=2, column=5, padx=2, pady=10, sticky="w")
+
+        self.path_end_label = ctk.CTkLabel(self.path_frame, text=f"End: ", width=20, corner_radius=0, anchor="w")
+        self.path_end_label.grid(row=3, column=0, padx=16, pady=10, sticky="nsew")
+        self.path_end_x_label = ctk.CTkLabel(self.path_frame, text=f"(", width=5, corner_radius=0, anchor="w")
+        self.path_end_x_label.grid(row=3, column=1, padx=2, pady=10, sticky="w")
+        self.path_end_x_entry = ctk.CTkEntry(
+            master=self.path_frame, placeholder_text=f"0", width=40, height=25, border_width=2, corner_radius=10
+        )
+        self.path_end_x_entry.grid(row=3, column=2, padx=2, pady=10, sticky="w")
+        self.path_end_y_label = ctk.CTkLabel(self.path_frame, text=f";", width=5, corner_radius=0, anchor="w")
+        self.path_end_y_label.grid(row=3, column=3, padx=2, pady=10, sticky="w")
+        self.path_end_y_entry = ctk.CTkEntry(
+            master=self.path_frame, placeholder_text=f"0", width=40, height=25, border_width=2, corner_radius=10
+        )
+        self.path_end_y_entry.grid(row=3, column=4, padx=2, pady=10, sticky="w")
+        self.path_end_y_label = ctk.CTkLabel(self.path_frame, text=f")", width=5, corner_radius=0, anchor="w")
+        self.path_end_y_label.grid(row=3, column=5, padx=2, pady=10, sticky="w")
 
         # Import/Export File Frame
         self.file_frame = ctk.CTkFrame(
             self,
             corner_radius=10,
         )
-        self.file_frame.grid(row=1, column=0, padx=20, pady=20, sticky="nwe")
+        self.file_frame.grid(row=1, column=0, padx=16, pady=16, sticky="nwe")
         self.file_frame.grid_columnconfigure(0, weight=1)
         self.file_frame.grid_rowconfigure(3, weight=1)
 
@@ -85,7 +182,7 @@ class App(ctk.CTk):
         self.import_button = ctk.CTkButton(
             self.file_frame,
             corner_radius=8,
-            height=40,
+            height=25,
             border_spacing=10,
             text="Import Maze",
             text_color=("gray10", "gray90"),
@@ -105,7 +202,7 @@ class App(ctk.CTk):
         self.export_button = ctk.CTkButton(
             self.file_frame,
             corner_radius=8,
-            height=40,
+            height=25,
             border_spacing=10,
             text="Export Maze",
             text_color=("gray10", "gray90"),
@@ -127,7 +224,7 @@ class App(ctk.CTk):
             self,
             corner_radius=10,
         )
-        self.appearance_frame.grid(row=2, column=0, padx=20, pady=20, sticky="swe")
+        self.appearance_frame.grid(row=3, column=0, padx=16, pady=16, sticky="swe")
         self.appearance_frame.grid_columnconfigure(0, weight=1)
         self.appearance_frame.grid_rowconfigure(0, weight=1)
         self.appearance_mode_optionemenu = ctk.CTkOptionMenu(
@@ -135,29 +232,76 @@ class App(ctk.CTk):
             values=["Light", "Dark", "System"],
             command=self.change_appearance_mode_event,
             fg_color=BUTTON_COLOR,
+            text_color=("gray10", "gray90"),
+            button_hover_color=("gray80", "gray20"),
+            button_color=("gray70", "gray30"),
         )
         self.appearance_mode_optionemenu.set("System")
-        self.appearance_mode_optionemenu.grid(row=0, column=0, padx=20, pady=(10, 10))
+        self.appearance_mode_optionemenu.grid(row=0, column=0, padx=16, pady=(10, 10))
 
         # Maze Frame
-        self.maze_frame = ctk.CTkFrame(self, corner_radius=10, width=500, height=500)
-        self.maze_frame.grid(row=0, column=1, rowspan=3, sticky="nsew", padx=20, pady=20)
+        self.maze_frame = ctk.CTkFrame(self, corner_radius=10)
+        self.maze_frame.grid(row=0, column=1, rowspan=4, sticky="nsew", padx=16, pady=16)
         self.maze_frame.grid_rowconfigure(0, weight=1)
         self.maze_frame.grid_columnconfigure(0, weight=1)
 
-        self.maze_label = ctk.CTkLabel(self.maze_frame, fg_color="transparent", text="", width=500, height=500, anchor="center")
-        self.maze_label.grid(row=0, column=0, columnspan=3, sticky="nsew")
+        self.maze_label = ctk.CTkLabel(
+            self.maze_frame, fg_color="transparent", text="", width=500, height=500, corner_radius=10, anchor="center"
+        )
+        self.maze_label.grid(row=0, column=0, padx=16, pady=20, sticky="nsew")
 
         self.generate_new_maze()
 
-    def draw_maze(self, width, height, seed=None):
-        self.maze = Maze(width, height, seed)
-        if width > height:
-            size_x, size_y = 500, 500 // width * height
+    def draw_maze(self):
+        if self.width > self.height:
+            size_x, size_y = 500, 500 // self.width * self.height
         else:
-            size_x, size_y = 500 // height * width, 500
-        self.maze_image = ctk.CTkImage(Image.fromarray(self.maze.draw_path((2, 2), (9, 7))), size=(size_y, size_x))
-        self.maze_label.configure(image=self.maze_image, text="")
+            size_x, size_y = 500 // self.height * self.width, 500
+        self.maze_image = ctk.CTkImage(
+            Image.fromarray(self.maze.draw_maze(self.appearance_mode_optionemenu.get())), size=(size_x, size_y)
+        )
+        self.maze_label.configure(image=self.maze_image, text="", corner_radius=10)
+
+        self.path_start_x_entry.delete(0, "end")
+        self.path_start_x_entry.insert(0, "0")
+        self.path_start_y_entry.delete(0, "end")
+        self.path_start_y_entry.insert(0, "0")
+        self.path_end_x_entry.delete(0, "end")
+        self.path_end_x_entry.insert(0, str(self.width - 1))
+        self.path_end_y_entry.delete(0, "end")
+        self.path_end_y_entry.insert(0, str(self.height - 1))
+        self.path_label.configure(text="Maze Path")
+
+    def draw_path(self):
+        if self.width > self.height:
+            size_x, size_y = 500, 500 // self.width * self.height
+        else:
+            size_x, size_y = 500 // self.height * self.width, 500
+
+        start = [0, 0]
+        try:
+            start[0] = int(self.path_start_x_entry.get())
+        except:
+            pass
+        try:
+            start[1] = int(self.path_start_y_entry.get())
+        except:
+            pass
+
+        end = [self.width - 1, self.height - 1]
+        try:
+            end[0] = int(self.path_end_x_entry.get())
+        except:
+            pass
+        try:
+            end[1] = int(self.path_end_y_entry.get())
+        except:
+            pass
+
+        path_img, path_len = self.maze.draw_path(tuple(start), tuple(end), self.appearance_mode_optionemenu.get())
+        self.maze_image = ctk.CTkImage(Image.fromarray(path_img), size=(size_x, size_y))
+        self.maze_label.configure(image=self.maze_image, text="", corner_radius=10)
+        self.path_label.configure(text=f"Path length: {path_len}")
 
     def generate_new_maze(self):
         try:
@@ -171,8 +315,17 @@ class App(ctk.CTk):
         if self.width >= 100 or self.height >= 100:
             self.maze_label.configure(text="Width and height must be integers less than 100", image="")
             return
+
         self.import_label.configure(text="No imported maze")
-        self.draw_maze(self.width, self.height)
+        self.maze = Maze(self.width, self.height, algorithm=self.algorithm)
+        self.draw_maze()
+
+    def algorithm_selection_event(self, value):
+        self.algorithm = value
+        self.generate_new_maze()
+
+    def show_path(self):
+        self.draw_path()
 
     def import_button_event(self):
         filename = filedialog.askopenfilename(
@@ -181,14 +334,17 @@ class App(ctk.CTk):
         if filename == "":
             return
         self.import_label.configure(text=f"Imported maze: {filename.split('/')[-1]}")
-        width, height, seed = import_maze(filename)
-        self.width_entry.insert(0, str(width))
-        self.height_entry.insert(0, str(height))
-        self.draw_maze(width, height, seed)
+        self.width, self.height, self.algorithm, self.seed = import_maze(filename)
+        self.width_entry.insert(0, str(self.width))
+        self.height_entry.insert(0, str(self.height))
+        self.algorithm_options.set(self.algorithm)
+        self.maze = Maze(self.width, self.height, algorithm=self.algorithm, seed=self.seed)
+        self.draw_maze()
 
     def export_button_event(self):
+        filetypes = (("Maze file", "*.maze"), ("Mage Picture", "*.png"))
         filename = filedialog.asksaveasfilename(
-            initialdir=os.getcwd(), title="Select maze file", filetypes=(("Maze file", "*.maze"),)
+            initialdir=os.getcwd(), title="Select maze file", filetypes=filetypes, defaultextension=filetypes
         )
         if filename == "":
             return
@@ -196,7 +352,7 @@ class App(ctk.CTk):
 
     def change_appearance_mode_event(self, new_appearance_mode: str):
         ctk.set_appearance_mode(new_appearance_mode)
-        self.draw_maze(self.width, self.height)
+        self.draw_maze()
 
 
 if __name__ == "__main__":
