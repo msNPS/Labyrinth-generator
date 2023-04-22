@@ -3,6 +3,7 @@ import sys
 import time
 import cv2
 import numpy
+from config import *
 
 sys.setrecursionlimit(10**9)
 
@@ -23,7 +24,7 @@ class Maze:
             self.generate_dfs()
         elif algorithm == "BFS":
             self.generate_bfs()
-        elif algorithm == "Kraskal's":
+        elif algorithm == "Kraskal":
             self.generate_kruskal()
         self.draw_base()
 
@@ -134,7 +135,7 @@ class Maze:
         self.img[self.height * 6][self.width * 6] = (255, 255, 255)
 
     def draw_maze(self, theme="Dark"):
-        if theme == "Dark" or theme == "System":
+        if theme == "Dark":
             self.last_draw = self.img
         elif theme == "Light":
             self.last_draw = self.invert_maze(self.img)
@@ -142,7 +143,7 @@ class Maze:
 
     def draw_path(self, start, finish, theme="Dark"):
         self.last_draw = "path"
-        if theme == "Dark" or theme == "System":
+        if theme == "Dark":
             path_color = (110, 197, 140)
         else:
             path_color = (206, 159, 177)
@@ -158,7 +159,7 @@ class Maze:
                 2,
             )
 
-        if theme == "Dark" or theme == "System":
+        if theme == "Dark":
             self.last_draw = self.path_img
         elif theme == "Light":
             self.last_draw = self.invert_maze(self.path_img)
