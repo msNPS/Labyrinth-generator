@@ -5,9 +5,7 @@ import os
 from PIL import Image
 from .archiver import export_maze, import_maze
 from .maze_generator import Maze
-
-
-BUTTON_COLOR = ("#68b885", "#31604e")
+from config import *
 
 
 class App(ctk.CTk):
@@ -22,7 +20,7 @@ class App(ctk.CTk):
 
         self.title("Maze generator")
         self.iconbitmap("static/icon.ico")
-        self.geometry("1000x800")
+        self.geometry(WINDOW_SIZE)
 
         # Set grid layout 1x2
         self.grid_rowconfigure(3, weight=1)
@@ -43,8 +41,8 @@ class App(ctk.CTk):
             height=50,
             border_spacing=10,
             text="🎲 Generate Maze",
-            text_color=("gray10", "gray90"),
-            hover_color=("gray70", "gray30"),
+            text_color=TEXT_COLOR,
+            hover_color=HOVER_COLOR,
             anchor="center",
             command=self.generate_new_maze,
             fg_color=BUTTON_COLOR,
@@ -63,16 +61,16 @@ class App(ctk.CTk):
         self.algorithm_label.grid(row=1, column=0, padx=16, sticky="nsew")
         self.algorithm_options = ctk.CTkOptionMenu(
             self.generate_frame,
-            values=["DFS", "BFS", "Kraskal's"],
+            values=["DFS", "BFS", "Kraskal"],
             variable=ctk.StringVar(self, value="DFS"),
             width=150,
             height=30,
             corner_radius=10.0,
             command=self.algorithm_selection_event,
             fg_color=BUTTON_COLOR,
-            text_color=("gray10", "gray90"),
-            button_hover_color=("gray80", "gray20"),
-            button_color=("gray70", "gray30"),
+            text_color=TEXT_COLOR,
+            button_color=OPTION_COLOR,
+            button_hover_color=OPTION_HOVER_COLOR,
         )
         self.algorithm_options.grid(row=2, column=0, padx=16, pady=10, sticky="nsew")
 
@@ -102,7 +100,7 @@ class App(ctk.CTk):
         self.path_frame.grid_rowconfigure(3, weight=1)
 
         self.path_label = ctk.CTkLabel(self.path_frame, text=f"Maze Path", width=200, corner_radius=0, anchor="center")
-        self.path_label.grid(row=0, column=0, columnspan=6, padx=16, pady=16)
+        self.path_label.grid(row=0, column=0, columnspan=6, padx=16, pady=10)
 
         self.path_show_button = ctk.CTkButton(
             self.path_frame,
@@ -111,8 +109,8 @@ class App(ctk.CTk):
             width=100,
             border_spacing=10,
             text="🔎Show",
-            text_color=("gray10", "gray90"),
-            hover_color=("gray70", "gray30"),
+            text_color=TEXT_COLOR,
+            hover_color=HOVER_COLOR,
             anchor="center",
             command=self.show_path,
             fg_color=BUTTON_COLOR,
@@ -125,8 +123,8 @@ class App(ctk.CTk):
             width=100,
             border_spacing=10,
             text="🗑️Clear",
-            text_color=("gray10", "gray90"),
-            hover_color=("gray70", "gray30"),
+            text_color=TEXT_COLOR,
+            hover_color=HOVER_COLOR,
             anchor="center",
             command=self.draw_maze,
             fg_color=BUTTON_COLOR,
@@ -177,7 +175,7 @@ class App(ctk.CTk):
         self.file_frame.grid_rowconfigure(3, weight=1)
 
         self.import_label = ctk.CTkLabel(self.file_frame, text=f"No imported maze", width=200, corner_radius=0, anchor="center")
-        self.import_label.grid(row=0, column=0, padx=16, pady=10, sticky="swe")
+        self.import_label.grid(row=0, column=0, padx=16, pady=10)
 
         self.import_button = ctk.CTkButton(
             self.file_frame,
@@ -185,8 +183,8 @@ class App(ctk.CTk):
             height=25,
             border_spacing=10,
             text="Import Maze",
-            text_color=("gray10", "gray90"),
-            hover_color=("gray70", "gray30"),
+            text_color=TEXT_COLOR,
+            hover_color=HOVER_COLOR,
             anchor="center",
             command=self.import_button_event,
             fg_color=BUTTON_COLOR,
@@ -205,8 +203,8 @@ class App(ctk.CTk):
             height=25,
             border_spacing=10,
             text="Export Maze",
-            text_color=("gray10", "gray90"),
-            hover_color=("gray70", "gray30"),
+            text_color=TEXT_COLOR,
+            hover_color=HOVER_COLOR,
             anchor="center",
             command=self.export_button_event,
             fg_color=BUTTON_COLOR,
@@ -229,14 +227,14 @@ class App(ctk.CTk):
         self.appearance_frame.grid_rowconfigure(0, weight=1)
         self.appearance_mode_optionemenu = ctk.CTkOptionMenu(
             self.appearance_frame,
-            values=["Light", "Dark", "System"],
+            values=["Light", "Dark"],
             command=self.change_appearance_mode_event,
             fg_color=BUTTON_COLOR,
-            text_color=("gray10", "gray90"),
-            button_hover_color=("gray80", "gray20"),
-            button_color=("gray70", "gray30"),
+            text_color=TEXT_COLOR,
+            button_color=OPTION_COLOR,
+            button_hover_color=OPTION_HOVER_COLOR,
         )
-        self.appearance_mode_optionemenu.set("System")
+        self.appearance_mode_optionemenu.set("Dark")
         self.appearance_mode_optionemenu.grid(row=0, column=0, padx=16, pady=(10, 10))
 
         # Maze Frame
@@ -333,8 +331,12 @@ class App(ctk.CTk):
         )
         if filename == "":
             return
+        try:
+            self.width, self.height, self.algorithm, self.seed = import_maze(filename)
+        except:
+            tk.messagebox.showerror(title="Import error", message="File unreadable")
+            return
         self.import_label.configure(text=f"Imported maze: {filename.split('/')[-1]}")
-        self.width, self.height, self.algorithm, self.seed = import_maze(filename)
         self.width_entry.insert(0, str(self.width))
         self.height_entry.insert(0, str(self.height))
         self.algorithm_options.set(self.algorithm)
