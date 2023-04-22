@@ -308,10 +308,10 @@ class App(ctk.CTk):
             if self.height_entry.get() != "":
                 self.height = int(self.height_entry.get())
         except:
-            self.maze_label.configure(text="Width and height must be integers less than 100", image="")
+            tk.messagebox.showerror(title="Incorrect dimennsions", message="Width and height must be integers not more than 100")
             return
-        if self.width >= 100 or self.height >= 100:
-            self.maze_label.configure(text="Width and height must be integers less than 100", image="")
+        if self.width > 100 or self.height > 100:
+            tk.messagebox.showerror(title="Incorrect dimennsions", message="Width and height must be integers not more than 100")
             return
 
         self.import_label.configure(text="No imported maze")
@@ -337,7 +337,9 @@ class App(ctk.CTk):
             tk.messagebox.showerror(title="Import error", message="File unreadable")
             return
         self.import_label.configure(text=f"Imported maze: {filename.split('/')[-1]}")
+        self.width_entry.delete(0, "end")
         self.width_entry.insert(0, str(self.width))
+        self.height_entry.delete(0, "end")
         self.height_entry.insert(0, str(self.height))
         self.algorithm_options.set(self.algorithm)
         self.maze = Maze(self.width, self.height, algorithm=self.algorithm, seed=self.seed)
