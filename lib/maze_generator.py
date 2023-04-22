@@ -8,29 +8,93 @@ sys.setrecursionlimit(10**9)
 
 
 class Maze:
-    def __init__(self, height, width, seed=None):
-        self.height = height
+    def __init__(self, width, height, algorithm="DFS", seed=None):
         self.width = width
+        self.height = height
         if seed:
             self.seed = seed
         else:
             self.seed = time.time()
+        self.algorithm = algorithm
         random.seed(self.seed)
         self.maze = [[[] for x in range(self.width)] for y in range(self.height)]
-        self.used = [[False for x in range(self.width)] for y in range(self.height)]
-        self.dfs_generate(0, 0)
+
+        if algorithm == "DFS":
+            self.generate_dfs()
+        elif algorithm == "BFS":
+            self.generate_bfs()
+        elif algorithm == "Kraskal's":
+            self.generate_kruskal()
         self.draw_base()
 
-    def dfs_generate(self, x, y):
-        self.used[y][x] = True
-        neighbours = [(x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)]
-        random.shuffle(neighbours)
-        for nx, ny in neighbours:
-            if nx < 0 or nx >= self.width or ny < 0 or ny >= self.height or self.used[ny][nx]:
-                continue
-            self.maze[y][x].append((nx, ny))
-            self.maze[ny][nx].append((x, y))
-            self.dfs_generate(nx, ny)
+    def generate_dfs(self):
+        def dfs(x, y):
+            self.used[y][x] = True
+            neighbours = [(x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)]
+            random.shuffle(neighbours)
+            for nx, ny in neighbours:
+                if nx < 0 or nx >= self.width or ny < 0 or ny >= self.height or self.used[ny][nx]:
+                    continue
+                self.maze[y][x].append((nx, ny))
+                self.maze[ny][nx].append((x, y))
+                dfs(nx, ny)
+
+        self.used = [[False for x in range(self.width)] for y in range(self.height)]
+        x = random.randint(0, self.width - 1)
+        y = random.randint(0, self.height - 1)
+        dfs(x, y)
+
+    def generate_bfs(self):
+        queue = [(random.randint(0, self.width - 1), random.randint(0, self.height - 1))]
+        self.used = [[False for x in range(self.width)] for y in range(self.height)]
+        while queue:
+            x, y = queue.pop()
+            self.used[y][x] = True
+            neighbours = [(x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)]
+            random.shuffle(neighbours)
+            for nx, ny in neighbours:
+                if nx < 0 or nx >= self.width or ny < 0 or ny >= self.height or not self.used[ny][nx]:
+                    continue
+                self.maze[y][x].append((nx, ny))
+                self.maze[ny][nx].append((x, y))
+                break
+
+            for nx, ny in neighbours:
+                if (
+                    nx >= 0
+                    and nx < self.width
+                    and ny >= 0
+                    and ny < self.height
+                    and not self.used[ny][nx]
+                    and not (nx, ny) in queue
+                ):
+                    queue.append((nx, ny))
+
+    def generate_kruskal(self):
+        cells = [[(x, y)] for x in range(self.width) for y in range(self.height)]
+        for _ in range(self.width * (self.height + 1) + self.height * (self.width + 1)):
+            random.shuffle(cells)
+            group0 = cells[0]
+            for group1 in cells[1:]:
+                connected = False
+                for (x, y) in group0:
+                    if group0 == [(0, 0)] and group1 == [(1, 0)]:
+                        pass
+                    neighbours = [(x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)]
+                    random.shuffle(neighbours)
+                    for (nx, ny) in neighbours:
+                        if (nx, ny) in group1:
+                            self.maze[y][x].append((nx, ny))
+                            self.maze[ny][nx].append((x, y))
+                            cells.remove(group0)
+                            cells.remove(group1)
+                            cells.append(group0 + group1)
+                            connected = True
+                            break
+                    if connected:
+                        break
+                if connected:
+                    break
 
     def shortest_path_dfs(self, cur, finish, prev, path):
         if cur == finish:
@@ -69,28 +133,41 @@ class Maze:
             cv2.line(self.img, (x * 6, self.height * 6), (x * 6 + 6, self.height * 6), (255, 255, 255), 1)
         self.img[self.height * 6][self.width * 6] = (255, 255, 255)
 
-    def draw_maze(self):
-        return self.resize(self.img)
+    def draw_maze(self, theme="Dark"):
+        if theme == "Dark" or theme == "System":
+            self.last_draw = self.img
+        elif theme == "Light":
+            self.last_draw = self.invert_maze(self.img)
+        return self.resize(self.last_draw)
 
-    def draw_path(self, start, finish):
-        self.path_img = self.img
+    def draw_path(self, start, finish, theme="Dark"):
+        self.last_draw = "path"
+        if theme == "Dark" or theme == "System":
+            path_color = (110, 197, 140)
+        else:
+            path_color = (206, 159, 177)
+
+        self.path_img = self.img.copy()
         path = self.shortest_path(start, finish)
         for i in range(len(path) - 1):
             cv2.line(
-                self.img,
+                self.path_img,
                 (path[i][0] * 6 + 3, path[i][1] * 6 + 3),
                 (path[i + 1][0] * 6 + 3, path[i + 1][1] * 6 + 3),
-                (0, 255, 0),
-                1,
+                path_color,
+                2,
             )
-        return self.resize(self.path_img)
 
-    def invert_maze(self):
-        self.inverted_img = self.img
-        self.inverted_img = cv2.bitwise_not(self.inverted_img)
-        return self.resize(self.inverted_img)
+        if theme == "Dark" or theme == "System":
+            self.last_draw = self.path_img
+        elif theme == "Light":
+            self.last_draw = self.invert_maze(self.path_img)
+        return self.resize(self.last_draw), len(path)
+
+    def invert_maze(self, img):
+        return cv2.bitwise_not(img)
 
     def show_maze(self, img):
-        cv2.imshow("image", self.img)
+        cv2.imshow("image", img)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
