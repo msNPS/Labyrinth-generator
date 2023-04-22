@@ -7,6 +7,7 @@
 ## 🧩Примеры лабиринтов
 
 <img src="static/example1.png" width="50%">
+<img src="static/example2.png" width="50%">
 <img src="static/example3.png" width="60%">
 
 ## 📖Использование
