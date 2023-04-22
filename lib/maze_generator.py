@@ -115,9 +115,9 @@ class Maze:
 
     def resize(self, img):  # Makes maze in a higher resolution
         if self.width > self.height:
-            size_x, size_y = 800, 800 // self.width * self.height
+            size_x, size_y = 800, int(800 / self.width * self.height)
         else:
-            size_x, size_y = 800 // self.height * self.width, 800
+            size_x, size_y = int(800 / self.height * self.width), 800
         return cv2.resize(img, (size_x, size_y), interpolation=cv2.INTER_AREA)
 
     def draw_base(self):  # Draws maze base

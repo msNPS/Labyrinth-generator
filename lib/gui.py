@@ -252,9 +252,9 @@ class App(ctk.CTk):
 
     def draw_maze(self):  # Put the self.maze on the tkinter window
         if self.width > self.height:
-            size_x, size_y = 500, 500 // self.width * self.height
+            size_x, size_y = 500, int(500 / self.width * self.height)
         else:
-            size_x, size_y = 500 // self.height * self.width, 500
+            size_x, size_y = int(500 / self.height * self.width), 500
         self.maze_image = ctk.CTkImage(
             Image.fromarray(self.maze.draw_maze(self.appearance_mode_optionemenu.get())), size=(size_x, size_y)
         )
