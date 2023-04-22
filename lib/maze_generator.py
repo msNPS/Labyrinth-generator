@@ -1,16 +1,16 @@
-import random
+import random  # Imports
 import sys
 import time
 import cv2
 import numpy
 from config import *
 
-sys.setrecursionlimit(10**9)
+sys.setrecursionlimit(10**9)  # Sets recursion limit, so that maze can be deep
 
 
 class Maze:
     def __init__(self, width, height, algorithm="DFS", seed=None):
-        self.width = width
+        self.width = width  # Default values
         self.height = height
         if seed:
             self.seed = seed
@@ -20,7 +20,7 @@ class Maze:
         random.seed(self.seed)
         self.maze = [[[] for x in range(self.width)] for y in range(self.height)]
 
-        if algorithm == "DFS":
+        if algorithm == "DFS":  # Generates maze depending on algorithm
             self.generate_dfs()
         elif algorithm == "BFS":
             self.generate_bfs()
@@ -28,7 +28,7 @@ class Maze:
             self.generate_kruskal()
         self.draw_base()
 
-    def generate_dfs(self):
+    def generate_dfs(self):  # Generates maze using DFS based algorithm
         def dfs(x, y):
             self.used[y][x] = True
             neighbours = [(x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)]
@@ -45,7 +45,7 @@ class Maze:
         y = random.randint(0, self.height - 1)
         dfs(x, y)
 
-    def generate_bfs(self):
+    def generate_bfs(self):  # Generates maze using BFS based algorithm
         queue = [(random.randint(0, self.width - 1), random.randint(0, self.height - 1))]
         self.used = [[False for x in range(self.width)] for y in range(self.height)]
         while queue:
@@ -71,7 +71,7 @@ class Maze:
                 ):
                     queue.append((nx, ny))
 
-    def generate_kruskal(self):
+    def generate_kruskal(self):  # Generates maze using Kruskal based algorithm
         cells = [[(x, y)] for x in range(self.width) for y in range(self.height)]
         for _ in range(self.width * (self.height + 1) + self.height * (self.width + 1)):
             random.shuffle(cells)
@@ -97,7 +97,7 @@ class Maze:
                 if connected:
                     break
 
-    def shortest_path_dfs(self, cur, finish, prev, path):
+    def shortest_path_dfs(self, cur, finish, prev, path):  # Finds shortest path between two points
         if cur == finish:
             return path
         for next in self.maze[cur[1]][cur[0]]:
@@ -110,17 +110,17 @@ class Maze:
             path.pop(-1)
         return None
 
-    def shortest_path(self, start, finish):
+    def shortest_path(self, start, finish):  # Finds shortest path between two points
         return self.shortest_path_dfs(start, finish, start, [start])
 
-    def resize(self, img):
+    def resize(self, img):  # Makes maze in a higher resolution
         if self.width > self.height:
             size_x, size_y = 800, 800 // self.width * self.height
         else:
             size_x, size_y = 800 // self.height * self.width, 800
         return cv2.resize(img, (size_x, size_y), interpolation=cv2.INTER_AREA)
 
-    def draw_base(self):
+    def draw_base(self):  # Draws maze base
         self.img = numpy.zeros((self.height * 6 + 1, self.width * 6 + 1, 3), numpy.uint8)
         for y, row in enumerate(self.maze):
             for x, cell in enumerate(row):
@@ -134,14 +134,14 @@ class Maze:
             cv2.line(self.img, (x * 6, self.height * 6), (x * 6 + 6, self.height * 6), (255, 255, 255), 1)
         self.img[self.height * 6][self.width * 6] = (255, 255, 255)
 
-    def draw_maze(self, theme="Dark"):
+    def draw_maze(self, theme="Dark"):  # Draw maze
         if theme == "Dark":
             self.last_draw = self.img
         elif theme == "Light":
             self.last_draw = self.invert_maze(self.img)
         return self.resize(self.last_draw)
 
-    def draw_path(self, start, finish, theme="Dark"):
+    def draw_path(self, start, finish, theme="Dark"):  # Draws path between two points
         self.last_draw = "path"
         if theme == "Dark":
             path_color = (110, 197, 140)
@@ -165,10 +165,10 @@ class Maze:
             self.last_draw = self.invert_maze(self.path_img)
         return self.resize(self.last_draw), len(path)
 
-    def invert_maze(self, img):
+    def invert_maze(self, img):  # Inverts maze to light theme
         return cv2.bitwise_not(img)
 
-    def show_maze(self, img):
+    def show_maze(self, img):  # Shows maze using cv2
         cv2.imshow("image", img)
         cv2.waitKey(0)
         cv2.destroyAllWindows()

@@ -1,4 +1,4 @@
-import customtkinter as ctk
+import customtkinter as ctk  # Imports
 import tkinter as tk
 from tkinter import filedialog
 import os
@@ -11,22 +11,20 @@ from config import *
 class App(ctk.CTk):
     def __init__(self):
         super().__init__()
-        # Change accent color in customtkinter.py
 
-        self.width = 10
+        self.width = 10  # Default values
         self.height = 10
         self.algorithm = "DFS"
         self.seed = None
 
-        self.title("Maze generator")
+        self.title("Maze generator")  # Window initialisation
         self.iconbitmap("static/icon.ico")
         self.geometry(WINDOW_SIZE)
 
-        # Set grid layout 1x2
-        self.grid_rowconfigure(3, weight=1)
+        self.grid_rowconfigure(3, weight=1)  # Set grid layout 1x2
         self.grid_columnconfigure(1, weight=1)
 
-        # Generate Frame
+        # Generation Frame
         self.generate_frame = ctk.CTkFrame(
             self,
             corner_radius=10,
@@ -131,6 +129,7 @@ class App(ctk.CTk):
         )
         self.path_show_button.grid(row=1, column=3, sticky="nesw", padx=16, columnspan=3)
 
+        # Start point
         self.path_start_label = ctk.CTkLabel(self.path_frame, text=f"Start: ", width=20, corner_radius=0, anchor="w")
         self.path_start_label.grid(row=2, column=0, padx=16, pady=10, sticky="w")
         self.path_start_x_label = ctk.CTkLabel(self.path_frame, text=f"(", width=5, corner_radius=0, anchor="w")
@@ -148,6 +147,7 @@ class App(ctk.CTk):
         self.path_start_y_label = ctk.CTkLabel(self.path_frame, text=f")", width=5, corner_radius=0, anchor="w")
         self.path_start_y_label.grid(row=2, column=5, padx=2, pady=10, sticky="w")
 
+        # End point
         self.path_end_label = ctk.CTkLabel(self.path_frame, text=f"End: ", width=20, corner_radius=0, anchor="w")
         self.path_end_label.grid(row=3, column=0, padx=16, pady=10, sticky="nsew")
         self.path_end_x_label = ctk.CTkLabel(self.path_frame, text=f"(", width=5, corner_radius=0, anchor="w")
@@ -250,7 +250,7 @@ class App(ctk.CTk):
 
         self.generate_new_maze()
 
-    def draw_maze(self):
+    def draw_maze(self):  # Put the self.maze on the tkinter window
         if self.width > self.height:
             size_x, size_y = 500, 500 // self.width * self.height
         else:
@@ -270,7 +270,7 @@ class App(ctk.CTk):
         self.path_end_y_entry.insert(0, str(self.height - 1))
         self.path_label.configure(text="Maze Path")
 
-    def draw_path(self):
+    def draw_path(self):  # Put the maze with the path on the tkinter window
         if self.width > self.height:
             size_x, size_y = 500, 500 // self.width * self.height
         else:
@@ -301,7 +301,7 @@ class App(ctk.CTk):
         self.maze_label.configure(image=self.maze_image, text="", corner_radius=10)
         self.path_label.configure(text=f"Path length: {path_len}")
 
-    def generate_new_maze(self):
+    def generate_new_maze(self):  # Generate a new maze with new seed
         try:
             if self.width_entry.get() != "":
                 self.width = int(self.width_entry.get())
@@ -318,14 +318,14 @@ class App(ctk.CTk):
         self.maze = Maze(self.width, self.height, algorithm=self.algorithm)
         self.draw_maze()
 
-    def algorithm_selection_event(self, value):
+    def algorithm_selection_event(self, value):  # Change the generation algorithm
         self.algorithm = value
         self.generate_new_maze()
 
-    def show_path(self):
+    def show_path(self):  # Show the path on the maze
         self.draw_path()
 
-    def import_button_event(self):
+    def import_button_event(self):  # Import a maze from a file
         filename = filedialog.askopenfilename(
             initialdir=os.getcwd(), title="Select maze file", filetypes=(("Maze file", "*.maze"),)
         )
@@ -343,7 +343,7 @@ class App(ctk.CTk):
         self.maze = Maze(self.width, self.height, algorithm=self.algorithm, seed=self.seed)
         self.draw_maze()
 
-    def export_button_event(self):
+    def export_button_event(self):  # Export the maze to a .maze or .png file
         filetypes = (("Maze file", "*.maze"), ("Mage Picture", "*.png"))
         filename = filedialog.asksaveasfilename(
             initialdir=os.getcwd(), title="Select maze file", filetypes=filetypes, defaultextension=filetypes
@@ -352,11 +352,11 @@ class App(ctk.CTk):
             return
         export_maze(self.maze, filename)
 
-    def change_appearance_mode_event(self, new_appearance_mode: str):
+    def change_appearance_mode_event(self, new_appearance_mode: str):  # Change the appearance mode
         ctk.set_appearance_mode(new_appearance_mode)
         self.draw_maze()
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # Run the app
     app = App()
     app.mainloop()
