@@ -10,6 +10,10 @@
 <img src="static/example2.png" width="50%">
 <img src="static/example3.png" width="60%">
 
+**Отзыв тестировщика💬**
+<img src="static/review.png" width="80%">
+
+
 ## 📖Использование
 
 ### Генерация лабиринта🎲
